@@ -23,5 +23,9 @@ class DeviceRegistration extends DatabaseObject{
    $rObj = parent::makeNew($core, "deviceRegistration", "entryID", $assocArr, "DeviceRegistration");
    return $rObj;
   }
+  public static function deleteAll(Core &$core){
+    $cleanQ = "TRUNCATE deviceRegistration;";
+    $core->db($cleanQ);
+  }
 }
 ?>
