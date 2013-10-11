@@ -67,24 +67,6 @@ class Core{
 	}
 
 	/**
-	 * Session management - allows for users to be set and retrieved
-	 **/
-	function setSession(User $uObj){
-		$_SESSION["user"] = $uObj;
-	}
-
-	function getSession(){
-		$uObj = $_SESSION["user"];
-		if ($uObj)
-			$uObj->refresh_core(); //because the old core is serialised!
-		return $uObj;
-	}
-
-	function endSession(){
-		$_SESSION["user"] = null;
-		unset($_SESSION["user"]);
-	}
-	/**
 	 * Create and store a connection to a specified database, under a key.
 	 * It allows for multiple database connections to be configured and for
 	 * a default to be set. The first connection established is always set 
@@ -140,43 +122,6 @@ class Core{
 	}
 
 	/**
-	 * Return a 2D array from a DB query
-	 **/
-	function db_array($query, $transpose=false, $assoc=false, $key=null){
-		$this->debug("DB Array Called with transpose at [".$transpose."] and assoc at [".$assoc."]");
-		if (!$res = $this->db($query, $key))
-			return false;
-		//PHP only has integer and float numeric types.
-		$fieldsinfo = $res->fetch_fields(); //mysqli_fetch_fields($res);
-		//print "<br />bldbr fieldsinfo=<pre>"; var_dump($fieldsinfo); print "</pre>";
-		foreach ($fieldsinfo as $ix => $fieldinfo) {
-			if (in_array($fieldinfo->type, array(1,2,3,8,9,16)))
-				$fieldtypemap[$assoc ? $fieldinfo->name : $ix] = "integer";
-			else if (in_array($fieldinfo->type, array(4,5,246)))
-				$fieldtypemap[$assoc ? $fieldinfo->name : $ix] = "float";
-			else if (in_array($fieldinfo->type, array(7)))
-				$fieldtypemap[$assoc ? $fieldinfo->name : $ix] = null;
-			else
-				$fieldtypemap[$assoc ? $fieldinfo->name : $ix] = null;
-		}
-		//print "<br />bldbr fieldtypemap=<pre>"; var_dump($fieldtypemap); print "</pre>";
-		$r = 0;
-		$result = array();
-		while ($row = ($assoc ? @$res->fetch_assoc() : $res->fetch_row())){ //mysqli_fetch_assoc($res) : @mysqli_fetch_row($res))) {
-			//print "<br />bldbr row=<pre>"; var_dump($row); print "</pre>";
-			foreach ($row as $k => $v) 
-				if ($transpose)
-					$result[$k][] = $v === null ? null : ($fieldtypemap[$k] === "integer" ? (integer)$v : ($fieldtypemap[$k] === "float" ? (float)$v : $v));
-				else
-					$result[$r][$k] = $v === null ? null : ($fieldtypemap[$k] === "integer" ? (integer)$v : ($fieldtypemap[$k] === "float" ? (float)$v : $v));
-			$r++;
-		}
-		$res->free(); //mysqli_free_result($res);
-		//print "<hr />sql=$sql<br />"; var_dump($result);
-		return $result;
-	}
-
-	/**
 	 * Escape anything as appropriate
 	 **/
 	function escape($data, $key=null){
@@ -213,56 +158,7 @@ class Core{
 		}
 		return 0;
 	}
-		
-	/*Random string generator */
-	function random_string($charCount, $numCount)
-	{
-		$character_set_array = array();
-		$character_set_array[] = array('count' => $charCount, 'characters' => 'abcdefghijklmnopqrstuvwxyz');
-		$character_set_array[] = array('count' => $numCount, 'characters' => '0123456789');
-		$temp_array = array();
-		foreach ($character_set_array as $character_set) {
-			for ($i = 0; $i < $character_set['count']; $i++) {
-				$temp_array[] = $character_set['characters'][rand(0, strlen($character_set['characters']) - 1)];
-			}
-		}
-		shuffle($temp_array);
-		return implode('', $temp_array);
-	}
-
-	/* Array to csv string */
-	function array_to_string($arr){
-		$str = "";
-		foreach ($arr as $item){
-			if (strlen(trim($item))>0){
-				if ($str!="")
-					$str .= ",";
-				$str .= $item;
-			}
-		}
-		return $str;
-	}
-
-	/* HTML minifier */
-	function minify($buffer)
-	{
-		$search = array(
-						'/\>[^\S ]+/s', //strip whitespaces after tags, except space
-						'/[^\S ]+\</s', //strip whitespaces before tags, except space
-						'/(\s)+/s' // shorten multiple whitespace sequences
-						);
-		$replace = array(
-						 '>',
-						 '<',
-						 '\\1'
-						 );
-		$buffer = preg_replace($search, $replace, $buffer);
-
-		return $buffer;
-	}
-	function critical_error($data){
-		//a  method to report critical errors
-	}
+	
 
 }
 
