@@ -126,7 +126,7 @@ abstract class DatabaseObject{
 	}
   protected static function makeNew($tableName, $primaryKey, $assocArr, $objectType){
 	  global $core;
-	  $core->getDebugger()->debug("DatabaseObject::makeNew called with ".sizeof($assocArr)." elements in the associative array");
+	  $core->debug("DatabaseObject::makeNew called with ".sizeof($assocArr)." elements in the associative array");
 	  $keyString = "";
 	  $valueString = "";
 	  foreach ($assocArr as $key=>$value){
@@ -143,7 +143,7 @@ abstract class DatabaseObject{
 	  $ins = "INSERT INTO ".$tableName." (".$keyString.") VALUES (".$valueString.");";
 	  $res = $core->db($ins);
 	  if ($res){
-		  $getInsert = "SELECT * FROM ".$tableName." WHERE ".$primaryKey."='".$core->dbLastInsertID()."';";
+		  $getInsert = "SELECT * FROM ".$tableName." WHERE ".$primaryKey."='".$core->get_db()->insert_id."';";
 		  $giRes = $core->db($getInsert);
 		  if (($giRes)&&($giRes->num_rows==1)){
 			  $giObj = $giRes->fetch_object();

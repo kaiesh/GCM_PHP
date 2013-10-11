@@ -14,6 +14,8 @@ The structure of this repo is broken up as follows:
 The guts for the GCM pushing service are encapsulated in one object in:
 site-online/web/objects/controllers/GCMPush.php
 
+** Note: This requires the CURL extension to be available in PHP **
+
 You can copy/paste these files into your server, and make only two modifications to test it:
 - update all configurations in the site-online/web/objects/Settings.php file
 - deploy the necessary database from the site-online/gcm-db.sql file (or update the scripts to your DB tables)

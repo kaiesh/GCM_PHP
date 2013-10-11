@@ -4,7 +4,7 @@
 </head>
 <body>
 <?
-require_once("../objects/GCMCore.php");
+require_once("../objects/Core.php");
 require_once("../objects/models/DeviceRegistration.php");
 require_once("../objects/controllers/GCMPush.php");
 require_once("../objects/Settings.php");

@@ -14,7 +14,11 @@ $core->debug("Database Connected");
 
 $retArr = array();
 if ($_GET["deviceid"]){
-  $regObj = DeviceRegistration::create($core->escape($_GET["deviceid"]));
+	try{
+		$regObj = DeviceRegistration::create($core->escape($_GET["deviceid"]));
+	}catch (Exception $e){
+		 $retArr["error"] = $e->getMessage();
+	}
   if ($regObj){
     $retArr["status"] = true;
   }else{

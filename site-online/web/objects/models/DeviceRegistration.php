@@ -24,7 +24,7 @@ class DeviceRegistration extends DatabaseObject{
    $assocArr = array(
                "registrationID" => $registrationID
              );
-   $rObj = parent::makeNew($core, "deviceRegistration", "entryID", $assocArr, "DeviceRegistration");
+   $rObj = parent::makeNew("deviceRegistration", "entryID", $assocArr, "DeviceRegistration");
    return $rObj;
   }
   public static function deleteAll(){

@@ -18,8 +18,8 @@ class GCMPush{
       $this->drObjArr = array();
       $dbQ = "SELECT * FROM deviceRegistration WHERE 1";
       $dbRes = $this->core->db($dbQ);
-      if (($dbRes)&&(mysql_num_rows($dbRes) > 0)){
-        while ($dbRow = mysql_fetch_object($dbRes)){
+      if (($dbRes)&&($dbRes->num_rows > 0)){
+		  while ($dbRow = $dbRes->fetch_object()){
           $this->drObjArr[] = new DeviceRegistration($dbRow->entryID, $dbRow, true);
         }
       }
