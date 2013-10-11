@@ -4,11 +4,12 @@ The GCM code here is based on this answer in this thread:
 http://stackoverflow.com/a/11253231
 
 The structure of this repo is broken up as follows:
-GCM_PHP            <-- Holds basic docs and app
- |- site-online    <-- The contents of this dir will go on your server
-      |- web       <-- Apache needs access to the files under here
-          |- content  <-- Public access needed
-          |- objects  <-- Intended not to be available to the public
+
+    GCM_PHP            <-- Holds basic docs and app
+     |- site-online    <-- The contents of this dir will go on your server
+          |- web       <-- Apache needs access to the files under here
+              |- content  <-- Public access needed
+              |- objects  <-- Intended not to be available to the public
 
 The guts for the GCM pushing service are encapsulated in one object in:
 site-online/web/objects/controllers/GCMPush.php
