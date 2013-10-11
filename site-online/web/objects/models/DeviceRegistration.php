@@ -4,7 +4,7 @@ class DeviceRegistration extends DatabaseObject{
 	  global $core;
 	  $this->core = $core;
 	  //Check if the core is available in globals
-	  if ($this->core--null)
+	  if ($this->core==null)
 		  throw new Exception ("Core not available");
 	  $this->config("deviceRegistration", "entryID", $id);
 
