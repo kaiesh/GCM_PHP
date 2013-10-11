@@ -4,16 +4,27 @@
 </head>
 <body>
 <?
-require_once("objects/GCMCore.php");
-require_once("objects/models/DeviceRegistration.php");
-require_once("objects/controllers/GCMPush.php");
+require_once("../objects/GCMCore.php");
+require_once("../objects/models/DeviceRegistration.php");
+require_once("../objects/controllers/GCMPush.php");
+require_once("../objects/Settings.php");
 
-$core = new GCMCore();
-$gcm = new GCMPush($core);
-$gcm->setAPIKey("[[ PUT YOUR API KEY HERE ]]");
+$core = new Core();
+global $core;
+$core->debugger(Settings::$debug);
+
+$db = new DatabaseConn(Settings::$db_server, Settings::$db_user, Settings::$db_pass, Settings::$db_name);
+$db_sets = array("prod"=>$db);
+$db_key = "prod";
+$core->connect_db($db_sets[$db_key], $db_key, true);
+$core->debug("Database Connected");
+
+
+$gcm = new GCMPush();
+$gcm->setAPIKey(Settings::$gcm_key);
 
 if ($_GET["action"] == "delete"){
-  DeviceRegistration::deleteAll($core);
+  DeviceRegistration::deleteAll();
 }  
 
 $count = sizeof($gcm->getAllIDs());

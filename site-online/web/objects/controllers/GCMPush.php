@@ -5,8 +5,9 @@ class GCMPush{
   private $drObjArr;
   const GCM_URL = 'https://android.googleapis.com/gcm/send';
   
-  function GCMPush(Core &$coreRef){
-    $this->core=$coreRef;
+  function GCMPush(){
+	  global $core;
+	  $this->core=$core;
   }
   
   function setAPIKey($ak){
@@ -19,7 +20,7 @@ class GCMPush{
       $dbRes = $this->core->db($dbQ);
       if (($dbRes)&&(mysql_num_rows($dbRes) > 0)){
         while ($dbRow = mysql_fetch_object($dbRes)){
-          $this->drObjArr[] = new DeviceRegistration($this->core, $dbRow->entryID, $dbRow, true);
+          $this->drObjArr[] = new DeviceRegistration($dbRow->entryID, $dbRow, true);
         }
       }
     }

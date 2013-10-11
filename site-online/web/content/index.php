@@ -1,11 +1,20 @@
 <?
-require_once("objects/GCMCore.php");
-require_once("objects/models/DeviceRegistration.php");
-$core = new GCMCore();
+require_once("../objects/Settings.php");
+require_once("../objects/Core.php");
+require_once("../objects/models/DeviceRegistration.php");
+$core = new Core();
+global $core;
+$core->debugger(Settings::$debug);
+
+$db = new DatabaseConn(Settings::$db_server, Settings::$db_user, Settings::$db_pass, Settings::$db_name);
+$db_sets = array("prod"=>$db);
+$db_key = "prod";
+$core->connect_db($db_sets[$db_key], $db_key, true);
+$core->debug("Database Connected");
 
 $retArr = array();
 if ($_GET["deviceid"]){
-  $regObj = DeviceRegistration::create($core, $core->dbReadyTxt($_GET["deviceid"]));
+  $regObj = DeviceRegistration::create($core->escape($_GET["deviceid"]));
   if ($regObj){
     $retArr["status"] = true;
   }else{

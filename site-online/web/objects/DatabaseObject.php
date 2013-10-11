@@ -1,6 +1,6 @@
 <?
 /****************************************************************************
-* DatabaseObject v3
+* DatabaseObject v5
 *
 * Not to be confused with the Database file, this abstract class is designed
 * to allow for objects to be defined as unique database rows/records and
@@ -16,46 +16,58 @@
 * V3 of the object allows for a new entry to be added to the DB, but only
 * if there is one primary key - v4 will need to allow for multiple primary
 * keys when adding.
+*
+* V4 expects the Core to be defined from globals within the constructor of the
+* inheriting class
+*
+* V5 is not compatible with any previous version. Method signatures have changed
+* and a config function is expected to be called to calibrate the object.
+* This introduces efficiencies in the object by not requiring the db to be
+* hit when the object is loaded just to represent an ID
 ****************************************************************************/
 
 abstract class DatabaseObject{
 	private $dbArr;
-	private $core;
+	protected $core;
 	private $primaryKey;
 	private $table;
+	private $primaryKeyValue;
+	private $loaded = false;
 
-	protected function loadCore(&$coreRef){
-		$this->core = $coreRef;
-	}
-	protected function getCore(){
-		return $this->core;
-	}
-	protected function loadData($tableName, $primaryKeyName, $primaryKeyValue, $dbRow=false){
+
+	protected function config($tableName, $primaryKeyName, $primaryKeyValue){
 		$this->primaryKey = $primaryKeyName;
 		$this->table = $tableName;
+		$this->primaryKeyValue = $primaryKeyValue;
+	}
 
-		if ((is_array($primaryKeyName))&&(is_array($primaryKeyValue))){
+	protected function loadData($dbRow=false){
+		if ((!$this->primaryKey)||(!$this->table)||(!$this->primaryKeyValue))
+			throw new Exception ("Database object not configured - unable to load!");
+
+		if ((is_array($this->primaryKeyName))&&(is_array($this->primaryKeyValue))){
 			$whereClause = " WHERE ";
 			//assumes arrays are of the same length
-			$arrSize = sizeof($primaryKeyName);
+			$arrSize = sizeof($this->primaryKeyName);
 			for ($i=0; $i< $arrSize; $i++){
 				if ($i > 0){
 					$whereClause .= " AND";
 				}
-				$whereClause .= " ".$primaryKeyName[$i]."='".$primaryKeyValue[$i]."'";
+				$whereClause .= " ".$this->primaryKeyName[$i]."='".$this->primaryKeyValue[$i]."'";
 			}
 			$whereClause .=";";
 		}else{
-			$whereClause = " WHERE ".$primaryKeyName."='".$primaryKeyValue."';";
+			$whereClause = " WHERE ".$this->primaryKey."='".$this->primaryKeyValue."';";
 		}
 		if (!$dbRow){
-			$query = "SELECT * FROM ".$tableName." ".$whereClause;
+			$query = "SELECT * FROM ".$this->table." ".$whereClause;
 			$res = $this->core->db($query);
-			if (mysql_num_rows($res)==1){
+			//$this->core->debug("Res [".$res."] size: ".$res->num_rows);
+			if ($res->num_rows==1){
 				$dbArr = array();
-				$dbRow = mysql_fetch_object($res);
+				$dbRow = $res->fetch_object();
 			}else{
-				throw new Exception ("Unique object with identifier ".$primaryKeyValue." not found");
+				throw new Exception ("Unique object with identifier ".$this->primaryKeyValue." not found");
 			}
 		}
 		$varArr = get_object_vars($dbRow);
@@ -63,13 +75,20 @@ abstract class DatabaseObject{
 			//$this->core->getDebugger()->debug("Loading: ".$key." -> ".$value);
 			$this->dbArr[$key] = $value;
 		}
+		$this->loaded = true;
 	}
 
-	protected function get($key){
+	public function get($key){
+		if (!$this->loaded){
+			$this->loadData();
+		}
 		return $this->dbArr[$key];
 	}
 
 	protected function set($key, $value){
+		if (!$this->loaded){
+			$this->loadData();
+		}
 		if ($key != $this->primaryKey){
 			$this->dbArr[$key] = $value;
 			return true;
@@ -79,6 +98,9 @@ abstract class DatabaseObject{
 	}
 
 	protected function save(){
+		if (!$this->loaded){
+			$this->loadData();
+		}
 		$count = 0;
 		$query = "UPDATE ".$this->table." SET ";
 		if (is_array($this->primaryKey)){
@@ -94,44 +116,45 @@ abstract class DatabaseObject{
 				if ($count > 0){
 					$query .=",";
 				}
-				$query .= $key."='".$value."' ";
+				$query .= $this->core->escape($key)."='".$this->core->escape($value)."' ";
 				$count++;
 			}
 		}
-		$query .= " WHERE ".$this->primaryKey."='".$this->dbArr[$this->primaryKey]."';";
+		$query .= " WHERE ".$this->core->escape($this->primaryKey)."='".$this->core->escape($this->dbArr[$this->primaryKey])."';";
 		//echo $query;
 		$this->core->db($query);
 	}
-  protected static function makeNew(Core &$core, $tableName, $primaryKey, $assocArr, $objectType){
-  $core->getDebugger()->debug("DatabaseObject::makeNew called with ".sizeof($assocArr)." elements in the associative array");
-   $keyString = "";
-   $valueString = "";
-   foreach ($assocArr as $key=>$value){
-     if ($keyString!=""){
-       $keyString .=",";
-     }
-     $keyString .= $key;
-     
-     if ($valueString!=""){
-       $valueString .= ",";
-     }
-     $valueString.="'".$value."'";
-   }
-   $ins = "INSERT INTO ".$tableName." (".$keyString.") VALUES (".$valueString.");";
-   $res = $core->db($ins);
-   if ($res){
-     $getInsert = "SELECT * FROM ".$tableName." WHERE ".$primaryKey."='".$core->dbLastInsertID()."';";
-     $giRes = $core->db($getInsert);
-      if (($giRes)&&(mysql_num_rows($giRes)==1)){
-        $giObj = mysql_fetch_object($giRes);
-        $newObj = new $objectType($core, $giObj->$primaryKey, $giObj, true);
-        return $newObj;
-      }else{
-        throw new Exception("Unable to locate newly inserted record");
-      }
-    }else{
-      throw new Exception("Unable to create new entry");
-    }
+  protected static function makeNew($tableName, $primaryKey, $assocArr, $objectType){
+	  global $core;
+	  $core->getDebugger()->debug("DatabaseObject::makeNew called with ".sizeof($assocArr)." elements in the associative array");
+	  $keyString = "";
+	  $valueString = "";
+	  foreach ($assocArr as $key=>$value){
+		  if ($keyString!=""){
+			  $keyString .=",";
+		  }
+		  $keyString .= $core->escape($key);
+		  
+		  if ($valueString!=""){
+			  $valueString .= ",";
+		  }
+		  $valueString.="'".$core->escape($value)."'";
+	  }
+	  $ins = "INSERT INTO ".$tableName." (".$keyString.") VALUES (".$valueString.");";
+	  $res = $core->db($ins);
+	  if ($res){
+		  $getInsert = "SELECT * FROM ".$tableName." WHERE ".$primaryKey."='".$core->dbLastInsertID()."';";
+		  $giRes = $core->db($getInsert);
+		  if (($giRes)&&($giRes->num_rows==1)){
+			  $giObj = $giRes->fetch_object();
+			  $newObj = new $objectType($core, $giObj->$primaryKey, $giObj, true);
+			  return $newObj;
+		  }else{
+			  throw new Exception("Unable to locate newly inserted record");
+		  }
+	  }else{
+		  throw new Exception("Unable to create new entry");
+	  }
   }
 }
 
