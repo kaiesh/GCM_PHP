@@ -3,16 +3,20 @@ A quick set of files to provide an easy to copy/move GCM push server based on PH
 The GCM code here is based on this answer in this thread: 
 http://stackoverflow.com/a/11253231
 
-The PHP framework used is from:
-https://github.com/kaiesh/PHPLightweightFramework
+The structure of this repo is broken up as follows:
+GCM_PHP            <-- Holds basic docs and app
+ |- site-online    <-- The contents of this dir will go on your server
+      |- web       <-- Apache needs access to the files under here
+          |- content  <-- Public access needed
+          |- objects  <-- Intended not to be available to the public
 
 The guts for the GCM pushing service are encapsulated in one object in:
-objects/controllers/GCMPush.php
+site-online/web/objects/controllers/GCMPush.php
 
 You can copy/paste these files into your server, and make only two modifications to test it:
-- update the API key in /push.php
-- configure server details in objects/GCMCore.php
-- (don't forget to create the db+table!)
+- update all configurations in the site-online/web/objects/Settings.php file
+- deploy the necessary database from the site-online/gcm-db.sql file (or update the scripts to your DB tables)
+- [OPTIONAL] if you would like to move the "objects" directory somewhere else, then don't forget to update the pages under site-online/web/content
 
 To test:
 - Register devices by calling [server]/[dir]/?deviceid=[device push ID from Google]
